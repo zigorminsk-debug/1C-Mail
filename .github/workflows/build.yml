@@ -41,26 +41,33 @@ jobs:
       - name: Run tests
         id: run_tests
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm test 2>&1 | Tee-Object -Variable out
-          if ($LASTEXITCODE -ne 0) {
-            $text = ($out -join "`n")
-            if ($text.Length -gt 6000) { $text = $text.Substring($text.Length - 6000) }
-            Set-Content -Path diag.txt -Value $text -Encoding utf8
-            node scripts/post-diag.js
+          npm test > test.log 2>&1
+          $ec = $LASTEXITCODE
+          if ($ec -ne 0) {
+            $text = (Get-Content test.log -Raw)
+            if ($text.Length -gt 5000) { $text = $text.Substring($text.Length - 5000) }
+            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" -f "body=TESTS FAILED (exit $ec):`n$text"
           }
-          exit $LASTEXITCODE
+          exit $ec
 
       - name: Build NSIS installer
         id: build
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm run dist 2>&1 | Tee-Object -Variable out
-          $text = ($out -join "`n")
+          npm run dist > build.log 2>&1
+          $ec = $LASTEXITCODE
+          $text = (Get-Content build.log -Raw)
           if ($text.Length -gt 5000) { $text = $text.Substring($text.Length - 5000) }
           $tree = Test-Path dist ? (Get-ChildItem -Recurse dist | Format-Table FullName,Length -AutoSize | Out-String) : "DIST NOT FOUND"
-          gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" -f "body=BUILD (exit $LASTEXITCODE):`n$text`n`n=== dist tree ===`n$tree"
-          exit $LASTEXITCODE
+          if ($ec -ne 0) {
+            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" -f "body=BUILD FAILED (exit $ec):`n$text`n`n=== dist tree ===`n$tree"
+          }
+          exit $ec
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
