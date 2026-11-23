@@ -56,12 +56,12 @@ jobs:
         shell: pwsh
         run: |
           npm run dist 2>&1 | Tee-Object -Variable out
-          if ($LASTEXITCODE -ne 0) {
-            $text = ($out -join "`n")
-            if ($text.Length -gt 6000) { $text = $text.Substring($text.Length - 6000) }
-            Set-Content -Path diag.txt -Value $text -Encoding utf8
-            node scripts/post-diag.js
-          }
+          $text = ($out -join "`n")
+          if ($text.Length -gt 5000) { $text = $text.Substring($text.Length - 5000) }
+          $tree = ""
+          if (Test-Path dist) { $tree = (Get-ChildItem -Recurse dist | Format-Table FullName, Length -AutoSize | Out-String) } else { $tree = "DIST NOT FOUND" }
+          Set-Content -Path diag.txt -Value ("BUILD OUTPUT (exit $LASTEXITCODE):`n" + $text + "`n`n=== dist tree ===`n" + $tree) -Encoding utf8
+          node scripts/post-diag.js
           exit $LASTEXITCODE
 
       - name: Upload artifact
