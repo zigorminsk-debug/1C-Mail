@@ -57,18 +57,18 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "1C-Mail",
+      "runAfterFinish": true
     },
     "nsis": {
       "include": "build/installer.nsh",
       "oneClick": false,
       "perMachine": true,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "1C-Mail",
       "deleteAppDataOnUninstall": false,
-      "runAfterFinish": true,
       "requestExecutionLevel": "admin",
       "warningsAsErrors": false
     }
