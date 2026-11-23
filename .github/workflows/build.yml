@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: setup-exe
-          path: dist/*.exe
+          path: dist
           if-no-files-found: error
 
       - name: Create GitHub Release (tags only)
