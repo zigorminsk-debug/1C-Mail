@@ -1,0 +1,6 @@
+# Бинарные артефакты — без преобразования переводов строк (важно для Windows-раннеров CI,
+# иначе Git может повредить PDF при checkout с core.autocrlf=true).
+*.pdf binary
+*.ico binary
+*.png binary
+*.ttf binary

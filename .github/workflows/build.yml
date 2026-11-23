@@ -39,7 +39,20 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test
+        id: run_tests
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm test 2>&1 | Tee-Object -Variable out
+          if ($LASTEXITCODE -ne 0) {
+            $text = ($out -join "`n")
+            if ($text.Length -gt 6000) { $text = $text.Substring(0, 6000) }
+            $body = @{ body = ("TEST-FAILURE (run $env:GITHUB_RUN_ID)`n````n" + $text + "`n```") } | ConvertTo-Json -Compress
+            Set-Content -Path diag.json -Value $body -Encoding utf8
+            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" --input diag.json
+          }
+          exit $LASTEXITCODE
 
       - name: Build NSIS installer
         run: npm run dist

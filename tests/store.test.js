@@ -36,11 +36,9 @@ test('база: внешнее изменение файла подхватыв�
   const s = new DataStore(dir);
   assert.strictEqual(s.getClients().length, 0);
 
-  // «снаружи» пишет другая программа
+  // «снаружи» пишет другая программа (файл до этого не существовал → mtime изменилась)
   const ext = { version: 1, clients: [{ id: 'x1', unp: '777777777', name: 'Внешний', email: 'ext@example.by' }] };
-  const future = Date.now() + 10000;
   fs.writeFileSync(s.clientsFile, JSON.stringify(ext));
-  fs.utimesSync(s.clientsFile, future, future);
 
   assert.strictEqual(s.reloadClientsIfChanged(), true);
   assert.strictEqual(s.getClients().length, 1);
