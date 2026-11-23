@@ -61,11 +61,14 @@ jobs:
         run: |
           npm run dist > build.log 2>&1
           $ec = $LASTEXITCODE
-          $text = (Get-Content build.log -Raw)
-          if ($text.Length -gt 5000) { $text = $text.Substring($text.Length - 5000) }
-          $tree = Test-Path dist ? (Get-ChildItem -Recurse dist | Format-Table FullName,Length -AutoSize | Out-String) : "DIST NOT FOUND"
+          $lines = (Get-Content build.log) | Where-Object { $_.Trim() } | Select-Object -Last 25
+          $oneline = ($lines -join " | ")
+          if ($oneline.Length -gt 5000) { $oneline = $oneline.Substring(0, 5000) }
+          $tree = Test-Path dist ? "dist EXISTS" : "dist NOT FOUND"
           if ($ec -ne 0) {
-            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" -f "body=BUILD FAILED (exit $ec):`n$text`n`n=== dist tree ===`n$tree"
+            $obj = @{ body = ("BUILD FAILED exit $ec | $tree | $oneline") }
+            $obj | ConvertTo-Json -Compress | Set-Content body.json -Encoding utf8
+            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" --input body.json
           }
           exit $ec
 
