@@ -47,10 +47,9 @@ jobs:
           npm test 2>&1 | Tee-Object -Variable out
           if ($LASTEXITCODE -ne 0) {
             $text = ($out -join "`n")
-            if ($text.Length -gt 6000) { $text = $text.Substring(0, 6000) }
-            $body = @{ body = ("TEST-FAILURE (run $env:GITHUB_RUN_ID)`n````n" + $text + "`n```") } | ConvertTo-Json -Compress
-            Set-Content -Path diag.json -Value $body -Encoding utf8
-            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" --input diag.json
+            if ($text.Length -gt 6000) { $text = $text.Substring($text.Length - 6000) }
+            Set-Content -Path diag.txt -Value $text -Encoding utf8
+            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" -f "body=TEST-FAILURE run $env:GITHUB_RUN_ID" -f "body=@diag.txt"
           }
           exit $LASTEXITCODE
 
