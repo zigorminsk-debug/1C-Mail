@@ -1,0 +1,76 @@
+{
+  "name": "1c-mail",
+  "productName": "1C-Mail",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Виртуальный принтер для 1С: печать документов в PDF и автоматическая отправка клиенту по электронной почте",
+  "main": "src/main/main.js",
+  "author": "zigorminsk-debug",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.js",
+    "dist": "electron-builder --win nsis --publish never",
+    "gen-fixture": "node scripts/gen-fixture.js"
+  },
+  "dependencies": {
+    "nodemailer": "^10.6.1",
+    "pdfjs-dist": "^6.5.438"
+  },
+  "devDependencies": {
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0",
+    "pdf-lib": "^1.17.1"
+  },
+  "build": {
+    "appId": "by.1cmail.printer",
+    "productName": "1C-Mail",
+    "artifactName": "1C-Mail-Setup-${version}.exe",
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "scripts",
+        "to": "scripts"
+      },
+      {
+        "from": "resources",
+        "to": "resources"
+      }
+    ],
+    "asarUnpack": [
+      "**/node_modules/pdfjs-dist/**"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "include": "build/installer.nsh",
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "1C-Mail",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "requestExecutionLevel": "admin",
+      "warningsAsErrors": false
+    }
+  }
+}

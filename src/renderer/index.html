@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:" />
+  <title>1C-Mail</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand">
+        <img src="icon.png" alt="" />
+        <div>
+          <div class="brand-name">1C-Mail</div>
+          <div class="brand-sub">печать из 1С → PDF → e-mail</div>
+        </div>
+      </div>
+      <nav>
+        <button class="nav-btn active" data-tab="journal">Журнал <span class="badge" id="badge-journal"></span></button>
+        <button class="nav-btn" data-tab="pending">Отложенные <span class="badge" id="badge-pending"></span></button>
+        <button class="nav-btn" data-tab="clients">База клиентов</button>
+        <button class="nav-btn" data-tab="settings">Настройки</button>
+      </nav>
+      <div class="printer-state" id="printer-state">
+        <span class="dot unknown"></span>
+        <span id="printer-state-text">Проверка принтера…</span>
+      </div>
+    </aside>
+
+    <main id="content">
+      <!-- ================= ЖУРНАЛ ================= -->
+      <section class="tab active" id="tab-journal">
+        <header class="tab-head">
+          <h1>Журнал отправок</h1>
+          <div class="actions">
+            <button class="btn ghost" id="btn-refresh-journal">Обновить</button>
+          </div>
+        </header>
+        <div class="table-wrap">
+          <table id="journal-table">
+            <thead>
+              <tr>
+                <th style="width:150px">Время</th>
+                <th>Клиент</th>
+                <th style="width:130px">УНП</th>
+                <th style="width:210px">E-mail</th>
+                <th style="width:90px">Статус</th>
+                <th style="width:110px"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty" id="journal-empty">Пока пусто. Распечатайте документ из 1С на принтер «1C-Mail» — он появится здесь.</div>
+        </div>
+      </section>
+
+      <!-- ================= ОТЛОЖЕННЫЕ ================= -->
+      <section class="tab" id="tab-pending">
+        <header class="tab-head">
+          <h1>Отправка документа</h1>
+          <div class="actions">
+            <button class="btn ghost" id="btn-refresh-pending">Обновить</button>
+          </div>
+        </header>
+        <div id="pending-list" class="cards">
+          <div class="empty">Нет документов, ожидающих адреса.</div>
+        </div>
+      </section>
+
+      <!-- ================= КЛИЕНТЫ ================= -->
+      <section class="tab" id="tab-clients">
+        <header class="tab-head">
+          <h1>База клиентов</h1>
+          <div class="actions">
+            <input type="search" id="client-search" placeholder="Поиск: УНП, название, e-mail…" />
+            <button class="btn ghost" id="btn-import-clients">Импорт CSV</button>
+            <button class="btn ghost" id="btn-export-clients">Экспорт CSV</button>
+            <button class="btn primary" id="btn-add-client">+ Добавить</button>
+          </div>
+        </header>
+        <div class="hint" id="clients-path"></div>
+        <div class="table-wrap">
+          <table id="clients-table">
+            <thead>
+              <tr>
+                <th style="width:130px">УНП</th>
+                <th>Название</th>
+                <th style="width:230px">E-mail</th>
+                <th style="width:90px">Отправок</th>
+                <th style="width:120px"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty" id="clients-empty">База пуста. Она пополняется автоматически при каждой отправке, а также вручную или импортом из CSV.</div>
+        </div>
+      </section>
+
+      <!-- ================= НАСТРОЙКИ ================= -->
+      <section class="tab" id="tab-settings">
+        <header class="tab-head">
+          <h1>Настройки</h1>
+          <div class="actions">
+            <span class="save-state" id="save-state"></span>
+            <button class="btn primary" id="btn-save-settings">Сохранить</button>
+          </div>
+        </header>
+
+        <div class="grid">
+          <div class="card">
+            <h2>Принтер (1С)</h2>
+            <p class="muted">В 1С выберите принтер <b>«<span id="lbl-printer-name">1C-Mail</span>»</b> в диалоге печати. Документ будет сохранён в PDF и отправлен клиенту.</p>
+            <div class="row">
+              <label>Имя принтера</label>
+              <input type="text" id="set-printer-name" />
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="btn-printer-status">Проверить статус</button>
+              <button class="btn primary" id="btn-printer-install">Установить принтер</button>
+              <button class="btn ghost" id="btn-printer-test">Тестовая страница</button>
+              <button class="btn danger ghost" id="btn-printer-uninstall">Удалить принтер</button>
+            </div>
+            <pre class="log" id="printer-log"></pre>
+            <p class="muted">Путь к файлу захвата: <code id="lbl-spool"></code></p>
+          </div>
+
+          <div class="card">
+            <h2>SMTP-сервер (почта)</h2>
+            <div class="row"><label>Сервер</label><input type="text" id="set-smtp-host" placeholder="smtp.example.by" /></div>
+            <div class="row two">
+              <div><label>Порт</label><input type="number" id="set-smtp-port" /></div>
+              <div><label class="check"><input type="checkbox" id="set-smtp-secure" /> SSL/TLS (465)</label></div>
+            </div>
+            <div class="row two">
+              <div><label>Пользователь</label><input type="text" id="set-smtp-user" autocomplete="off" /></div>
+              <div><label>Пароль</label><input type="password" id="set-smtp-password" placeholder="••••••••" autocomplete="new-password" /></div>
+            </div>
+            <div class="row"><label>От кого</label><input type="text" id="set-smtp-from" placeholder="1C-Mail <noreply@example.by>" /></div>
+            <div class="row"><label class="check"><input type="checkbox" id="set-smtp-insecure" /> Разрешить самоподписанные сертификаты</label></div>
+            <div class="btn-row">
+              <button class="btn" id="btn-test-mail">Тестовое письмо</button>
+            </div>
+            <div class="row"><label>Тестовый e-mail</label><input type="text" id="set-test-mail-to" placeholder="admin@example.by" /></div>
+          </div>
+
+          <div class="card">
+            <h2>Письмо</h2>
+            <div class="row"><label>Тема</label><input type="text" id="set-subject" /></div>
+            <div class="row"><label>Текст</label><textarea id="set-body" rows="5"></textarea></div>
+            <p class="muted">Переменные: <code>{name}</code> <code>{unp}</code> <code>{date}</code> <code>{email}</code></p>
+            <div class="row">
+              <label class="check"><input type="checkbox" id="set-autosend" /> Отправлять автоматически, если клиент найден в базе</label>
+            </div>
+            <div class="row">
+              <label class="check"><input type="checkbox" id="set-confirm" /> Всегда подтверждать отправку вручную</label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Приложение</h2>
+            <div class="row">
+              <label class="check"><input type="checkbox" id="set-minimize-tray" /> Сворачивать в трей при закрытии</label>
+            </div>
+            <div class="row">
+              <label class="check"><input type="checkbox" id="set-autostart" /> Запускать при входе в Windows</label>
+            </div>
+            <div class="btn-row">
+              <button class="btn ghost" id="btn-open-datadir">Открыть папку данных</button>
+              <button class="btn ghost" id="btn-test-pdf">Создать тестовый PDF</button>
+            </div>
+            <p class="muted">Папка данных (база и журнал хранятся отдельно от программы и переживают обновление):<br /><code id="lbl-datadir"></code></p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
