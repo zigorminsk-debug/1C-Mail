@@ -41,30 +41,26 @@ jobs:
       - name: Run tests
         id: run_tests
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm test 2>&1 | Tee-Object -Variable out
           if ($LASTEXITCODE -ne 0) {
             $text = ($out -join "`n")
             if ($text.Length -gt 6000) { $text = $text.Substring($text.Length - 6000) }
             Set-Content -Path diag.txt -Value $text -Encoding utf8
-            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" -f "body=TEST-FAILURE run $env:GITHUB_RUN_ID" -f "body=@diag.txt"
+            node scripts/post-diag.js
           }
           exit $LASTEXITCODE
 
       - name: Build NSIS installer
         id: build
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run dist 2>&1 | Tee-Object -Variable out
           if ($LASTEXITCODE -ne 0) {
             $text = ($out -join "`n")
             if ($text.Length -gt 6000) { $text = $text.Substring($text.Length - 6000) }
             Set-Content -Path diag.txt -Value $text -Encoding utf8
-            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" -f "body=BUILD-FAILURE run $env:GITHUB_RUN_ID" -f "body=@diag.txt"
+            node scripts/post-diag.js
           }
           exit $LASTEXITCODE
 
