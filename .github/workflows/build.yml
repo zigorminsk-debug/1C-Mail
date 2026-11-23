@@ -58,10 +58,8 @@ jobs:
           npm run dist 2>&1 | Tee-Object -Variable out
           $text = ($out -join "`n")
           if ($text.Length -gt 5000) { $text = $text.Substring($text.Length - 5000) }
-          $tree = ""
-          if (Test-Path dist) { $tree = (Get-ChildItem -Recurse dist | Format-Table FullName, Length -AutoSize | Out-String) } else { $tree = "DIST NOT FOUND" }
-          Set-Content -Path diag.txt -Value ("BUILD OUTPUT (exit $LASTEXITCODE):`n" + $text + "`n`n=== dist tree ===`n" + $tree) -Encoding utf8
-          node scripts/post-diag.js
+          $tree = Test-Path dist ? (Get-ChildItem -Recurse dist | Format-Table FullName,Length -AutoSize | Out-String) : "DIST NOT FOUND"
+          gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" -f "body=BUILD (exit $LASTEXITCODE):`n$text`n`n=== dist tree ===`n$tree"
           exit $LASTEXITCODE
 
       - name: Upload artifact
