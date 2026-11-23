@@ -41,34 +41,30 @@ jobs:
       - name: Run tests
         id: run_tests
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm test > test.log 2>&1
           $ec = $LASTEXITCODE
           if ($ec -ne 0) {
-            $text = (Get-Content test.log -Raw)
-            if ($text.Length -gt 5000) { $text = $text.Substring($text.Length - 5000) }
-            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" -f "body=TESTS FAILED (exit $ec):`n$text"
+            (Get-Content test.log) | Where-Object { $_.Trim() } | Select-Object -Last 40 | ForEach-Object {
+              $line = ($_ -replace "`r","" -replace "`n","" -replace "::","--")
+              if ($line.Length -gt 0) { Write-Output "::error::$line" }
+            }
           }
           exit $ec
 
       - name: Build NSIS installer
         id: build
         shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run dist > build.log 2>&1
           $ec = $LASTEXITCODE
-          $lines = (Get-Content build.log) | Where-Object { $_.Trim() } | Select-Object -Last 25
-          $oneline = ($lines -join " | ")
-          if ($oneline.Length -gt 5000) { $oneline = $oneline.Substring(0, 5000) }
-          $tree = Test-Path dist ? "dist EXISTS" : "dist NOT FOUND"
           if ($ec -ne 0) {
-            $obj = @{ body = ("BUILD FAILED exit $ec | $tree | $oneline") }
-            $obj | ConvertTo-Json -Compress | Set-Content body.json -Encoding utf8
-            gh api -X POST "repos/zigorminsk-debug/1C-Mail/commits/$env:GITHUB_SHA/comments" --input body.json
+            (Get-Content build.log) | Where-Object { $_.Trim() } | Select-Object -Last 40 | ForEach-Object {
+              $line = ($_ -replace "`r","" -replace "`n","" -replace "::","--")
+              if ($line.Length -gt 0) { Write-Output "::error::$line" }
+            }
+            $tree = Test-Path dist ? "dist EXISTS" : "dist NOT FOUND"
+            Write-Output "::error::dist status: $tree"
           }
           exit $ec
 
