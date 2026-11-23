@@ -39,34 +39,10 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        id: run_tests
-        shell: pwsh
-        run: |
-          npm test > test.log 2>&1
-          $ec = $LASTEXITCODE
-          if ($ec -ne 0) {
-            (Get-Content test.log) | Where-Object { $_.Trim() } | Select-Object -Last 40 | ForEach-Object {
-              $line = ($_ -replace "`r","" -replace "`n","" -replace "::","--")
-              if ($line.Length -gt 0) { Write-Output "::error::$line" }
-            }
-          }
-          exit $ec
+        run: npm test
 
       - name: Build NSIS installer
-        id: build
-        shell: pwsh
-        run: |
-          npm run dist > build.log 2>&1
-          $ec = $LASTEXITCODE
-          if ($ec -ne 0) {
-            (Get-Content build.log) | Where-Object { $_.Trim() } | Select-Object -Last 40 | ForEach-Object {
-              $line = ($_ -replace "`r","" -replace "`n","" -replace "::","--")
-              if ($line.Length -gt 0) { Write-Output "::error::$line" }
-            }
-            $tree = Test-Path dist ? "dist EXISTS" : "dist NOT FOUND"
-            Write-Output "::error::dist status: $tree"
-          }
-          exit $ec
+        run: npm run dist
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
